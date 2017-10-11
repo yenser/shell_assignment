@@ -27,7 +27,7 @@ SPECIAL	[()><|&;*]
 %%
 
 char **getline() {
-  return (char **)yylex();
+  return (char ***)yylex();
 }
 
 
