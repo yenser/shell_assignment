@@ -1,9 +1,9 @@
 GCC=gcc
-CFLAGS = -c
+CFLAGS = -c -Wall
 OBJ = myshell.o test.o flex.o
 
 
-shell: lex.yy.c lex.o link.o test.o
+shell: clean lex.yy.c lex.o myshell.o link.o test.o
 	gcc lex.yy.c myshell.o test.o -o shell
 
 lex.yy.c:
@@ -16,7 +16,7 @@ myshell.o:
 	$(GCC) $(CFLAGS) myshell.c
 
 link.o:
-	$(GCC) -lfl lex.o myshell.o
+	$(GCC) -lfl lex.yy.o myshell.o
 
 test.o:
 	$(GCC) $(CFLAGS) test.c
