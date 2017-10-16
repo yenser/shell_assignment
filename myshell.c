@@ -159,9 +159,9 @@ int do_command(char **args, int block,
       freopen(input_filename, "r", stdin);
     if(output == 2) {
       printf("printing to file %s\n", output_filename);
-      printf("%s\n",freopen(output_filename, "a+", stdout));
+      freopen(output_filename, "a+", stdout);
     }
-    else if(output == 1) {
+    if(output == 1) {
       freopen(output_filename, "w+", stdout);
     }
 
@@ -231,7 +231,6 @@ int redirect_output(char **args, char **output_filename) {
 
     // Look for the >
     if(args[i][0] == '>') {
-
       free(args[i]);
 
       // Look for the >> 
@@ -252,7 +251,7 @@ int redirect_output(char **args, char **output_filename) {
       // Adjust the rest of the arguments in the array
       
       for(j = i; args[j-1] != NULL; j++) {
-	args[j] = args[j+2];
+	args[j] = args[j+2+shouldAppend];
       }
       if(shouldAppend == 1) {
 	return 2;
