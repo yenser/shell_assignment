@@ -36,6 +36,7 @@ main() {
   int input;
   char *output_filename;
   char *input_filename;
+  int pipe;
 
   // Set up the signal handler
   sigset(SIGCHLD, sig_handler);
@@ -57,6 +58,9 @@ main() {
 
     // Check for an ampersand
     block = (ampersand(args) == 0);
+
+    // Check for a pipe
+    pipe = (pipeing(args) == 0);
 
     // Check for redirected input
     input = redirect_input(args, &input_filename);
@@ -113,6 +117,41 @@ int ampersand(char **args) {
     return 0;
   }
 
+  return 0;
+}
+
+int pipeing(char **args) {
+  int i;
+  int j;
+  int k;
+  char **beforeArgs;
+  char **afterArgs;
+
+  for(i = 0; args[i] != NULL; i++) ;
+  
+  // Look for the pipe
+  if(args[i][0] == '|') {
+
+    for(j = 0; j < i; j++) {
+      beforeArgs[j] = args[j];
+    }
+
+    j = j + 2;
+    k = 0;
+
+    while(args[j] != NULL) {
+      afterArgs[k] = args[j];
+      k++;
+      j++;
+    }
+
+    free(args);
+
+    return 1;
+  } else {
+    return 0;
+  }
+  
   return 0;
 }
 
