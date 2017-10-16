@@ -236,14 +236,13 @@ int redirect_output(char **args, char **output_filename) {
       // Look for the >> 
       if(args[i+1][0] == '>') {
 	shouldAppend = 1;
-        i++;
-	free(args[i]);
+	free(args[i+1]);
       }
 
 
       // Get the filename
-      if(args[i+1] != NULL) {
-	*output_filename = args[i+1];
+      if(args[i+1+shouldAppend] != NULL) {
+	*output_filename = args[i+1+shouldAppend];
       } else {
 	return -1;
       }
