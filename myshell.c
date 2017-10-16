@@ -158,7 +158,8 @@ int do_command(char **args, int block,
     if(input)
       freopen(input_filename, "r", stdin);
     if(output == 2) {
-      freopen(output_filename, "a+", stdout);
+      printf("printing to file %s\n", output_filename);
+      printf("%s\n",freopen(output_filename, "a+", stdout));
     }
     else if(output == 1) {
       freopen(output_filename, "w+", stdout);
@@ -249,6 +250,7 @@ int redirect_output(char **args, char **output_filename) {
       }
 
       // Adjust the rest of the arguments in the array
+      
       for(j = i; args[j-1] != NULL; j++) {
 	args[j] = args[j+2];
       }
