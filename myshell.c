@@ -86,6 +86,8 @@ main() {
     case 1:
       printf("Redirecting output to: %s\n", output_filename);
       break;
+    case 2:
+      printf("Appending output to: %s\n", output_filename);
     }
 
     // Do the command
@@ -155,12 +157,24 @@ int do_command(char **args, int block,
     // Set up redirection in the child process
     if(input)
       freopen(input_filename, "r", stdin);
-
-    if(output)
+    if(output == 2) {
+      freopen(output_filename, "a+", stdout);
+    }
+    else if(output == 1) {
       freopen(output_filename, "w+", stdout);
+    }
 
     // Execute the command
     result = execvp(args[0], args);
+
+/*
+    if(input) {
+	fclose(stdin);
+    } else if(output) {
+	fclose(stdout);
+    }
+*/
+
 
     exit(-1);
   }
@@ -210,12 +224,22 @@ int redirect_input(char **args, char **input_filename) {
 int redirect_output(char **args, char **output_filename) {
   int i;
   int j;
+  int shouldAppend = 0;
 
   for(i = 0; args[i] != NULL; i++) {
 
     // Look for the >
     if(args[i][0] == '>') {
+
       free(args[i]);
+
+      // Look for the >> 
+      if(args[i+1][0] == '>') {
+	shouldAppend = 1;
+        i++;
+	free(args[i]);
+      }
+
 
       // Get the filename
       if(args[i+1] != NULL) {
@@ -228,10 +252,15 @@ int redirect_output(char **args, char **output_filename) {
       for(j = i; args[j-1] != NULL; j++) {
 	args[j] = args[j+2];
       }
-
-      return 1;
+      if(shouldAppend == 1) {
+	return 2;
+      } else {
+        return 1;
+      }
     }
   }
 
   return 0;
 }
+
+
