@@ -30,6 +30,8 @@ void sig_handler(int signal) {
 main() {
   int i;
   char **args;
+  char **beforeArgs;
+  char **afterArgs;
   int result;
   int block;
   int output;
@@ -60,7 +62,7 @@ main() {
     block = (ampersand(args) == 0);
 
     // Check for a pipe
-    pipe = (pipeing(args) == 0);
+    pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
 
     // Check for redirected input
     input = redirect_input(args, &input_filename);
@@ -120,12 +122,10 @@ int ampersand(char **args) {
   return 0;
 }
 
-int pipeing(char **args) {
+int pipeing(char **args, char **beforeArgs, char **afterArgs) {
   int i;
   int j;
   int k;
-  char **beforeArgs;
-  char **afterArgs;
 
   for(i = 0; args[i] != NULL; i++) ;
   
@@ -133,19 +133,19 @@ int pipeing(char **args) {
   if(args[i][0] == '|') {
 
     for(j = 0; j < i; j++) {
-      beforeArgs[j] = args[j];
+      *beforeArgs[j] = args[j];
     }
 
     j = j + 2;
     k = 0;
 
     while(args[j] != NULL) {
-      afterArgs[k] = args[j];
+      *afterArgs[k] = args[j];
       k++;
       j++;
     }
 
-    free(args);
+    free(args[i]);
 
     return 1;
   } else {
