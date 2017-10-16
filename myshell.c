@@ -62,7 +62,7 @@ main() {
     block = (ampersand(args) == 0);
 
     // Check for a pipe
-    pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
+    //pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
 
     // Check for redirected input
     input = redirect_input(args, &input_filename);
@@ -122,6 +122,10 @@ int ampersand(char **args) {
   return 0;
 }
 
+/*
+ * Check for pipeing
+ * 
+ */
 int pipeing(char **args, char **beforeArgs, char **afterArgs) {
   int i;
   int j;
@@ -281,7 +285,7 @@ int redirect_output(char **args, char **output_filename) {
 
       // Get the filename
       if(args[i+1+shouldAppend] != NULL) {
-	*output_filename = args[i+1+shouldAppend];
+		*output_filename = args[i+1+shouldAppend];
       } else {
 	return -1;
       }
@@ -289,10 +293,10 @@ int redirect_output(char **args, char **output_filename) {
       // Adjust the rest of the arguments in the array
       
       for(j = i; args[j-1] != NULL; j++) {
-	args[j] = args[j+2+shouldAppend];
+		args[j] = args[j+2+shouldAppend];
       }
       if(shouldAppend == 1) {
-	return 2;
+		return 2;
       } else {
         return 1;
       }
