@@ -1,13 +1,15 @@
-GCC=gcc
-CFLAGS = -c -Wall
-OBJ = myshell.o test.o flex.o
+CFLAGS = -std=c99
+main: myshell.o lex.yy.o Makefile
+	gcc myshell.o lex.yy.o -lfl -o main
 
+myshell.o: myshell.c
+	gcc -c myshell.c $(CFLAGS)
 
-shell: clean lex.yy.c
-	gcc -o myshell lex.yy.c myshell.c -lfl
+lex.yy.o: lex.yy.c
+	gcc -c lex.yy.c
 
-lex.yy.c:
-	flex lex.c 
+lex.yy.c : lex.c
+	flex lex.c
 
 clean:
-	rm -rf *o lex.yy.c myshell 
+	rm -f *.o lex.yy.c main
