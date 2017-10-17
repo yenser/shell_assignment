@@ -64,64 +64,72 @@ main() {
 
   // Loop forever
   while(1) {
-
+    
     // Print out the prompt and get the input
     printf("->");
-    args = getaline();
-
-    // No input, continue
-    if(args[0] == NULL)
-      continue;
-    
-    //Check for a pipe
+    args = getaline(); 
+   
+    //check for a pipe
     pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
 
-    // Check for internal shell commands, such as exit
-    if(internal_command(args))
-      continue;
+    printf("%d\n", pipe);
 
-    // Check for an ampersand
-    block = (ampersand(args) == 0);
+    if(pipe=1) {
 
-    // Check for a pipe
-    //pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
+      // No input, continue
+      if(beforeArgs[0] == NULL)
+        continue;
+    
+      //Check for a pipe
+      //pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
 
-    // Check for redirected input
-    input = redirect_input(args, &input_filename);
+      // Check for internal shell commands, such as exit
+      if(internal_command(beforeArgs))
+        continue;
 
-    switch(input) {
-    case -1:
-      printf("Syntax error!\n");
-      continue;
-      break;
-    case 0:
-      break;
-    case 1:
-      printf("Redirecting input from: %s\n", input_filename);
-      break;
+      // Check for an ampersand
+      block = (ampersand(beforeArgs) == 0);
+
+      // Check for a pipe
+      //pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
+
+      // Check for redirected input
+      input = redirect_input(beforeArgs, &input_filename);
+
+      switch(input) {
+      case -1:
+        printf("Syntax error!\n");
+        continue;
+        break;
+      case 0:
+        break;
+      case 1:
+        printf("Redirecting input from: %s\n", input_filename);
+        break;
+      }
+
+      // Check for redirected output
+      output = redirect_output(beforeArgs, &output_filename);
+
+      switch(output) {
+      case -1:
+        printf("Syntax error!\n");
+        continue;
+        break;
+      case 0:
+        break;
+      case 1:
+        printf("Redirecting output to: %s\n", output_filename);
+        break;
+      case 2:
+        printf("Appending output to: %s\n", output_filename);
+      }
+
+      // Do the command
+      do_command(beforeArgs, block,
+	         input, input_filename,
+	         output, output_filename);
     }
-
-    // Check for redirected output
-    output = redirect_output(args, &output_filename);
-
-    switch(output) {
-    case -1:
-      printf("Syntax error!\n");
-      continue;
-      break;
-    case 0:
-      break;
-    case 1:
-      printf("Redirecting output to: %s\n", output_filename);
-      break;
-    case 2:
-      printf("Appending output to: %s\n", output_filename);
-    }
-
-    // Do the command
-    do_command(args, block,
-	       input, input_filename,
-	       output, output_filename);
   }
 }
 
