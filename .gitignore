@@ -1,2 +1,5 @@
 lex.yy.c
 myshell
+lex.yy.o
+myshell.o
+main

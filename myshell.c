@@ -21,7 +21,8 @@ extern char **getaline();
 void sig_handler(int signal) {
   int status;
   int result = wait(&status);
-  //printf("signal: %d\n", signal);
+  printf("signal: %d\n", signal);
+  //kill(getpid(), SIGCHLD);
   printf("Wait returned %d\n", result);
 }
 
@@ -57,7 +58,9 @@ main() {
   afterArgs[49] = NULL;
 
   // Set up the signal handler
-  //sigset(SIGCHLD, sig_handler);
+  signal(SIGCHLD, SIG_IGN);
+  
+  
 
   // Loop forever
   while(1) {
@@ -216,7 +219,9 @@ int do_command(char **args, int block,
 
   //if this is the child
   if(child_id == 0) {
-
+	if(!block) {
+		setpgid(child_id, 0);
+	}
     // Set up redirection in the child process
     if(input)
       freopen(input_filename, "r", stdin);
