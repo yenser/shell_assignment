@@ -57,7 +57,7 @@ main() {
   afterArgs[49] = NULL;
 
   // Set up the signal handler
-  sigset(SIGCHLD, sig_handler);
+  //sigset(SIGCHLD, sig_handler);
 
   // Loop forever
   while(1) {
