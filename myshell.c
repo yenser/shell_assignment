@@ -45,18 +45,17 @@ main() {
   int pipe;
   int doReturn;
 
-
   beforeArgs = malloc(50*sizeof(char*));
-  for(int k=0; k<50; k++) {
-    beforeArgs[k]=malloc(50*sizeof(char*));
-  }
-  beforeArgs[49] = NULL;
+//  for(int k=0; k<50; k++) {
+  //  beforeArgs[k]=malloc(50*sizeof(char*));
+  //  beforeArgs[k] = NULL;
+//  }
 
   afterArgs = malloc(50*sizeof(char*));
-  for(int k=0; k<50; k++) {
-    afterArgs[k]=malloc(50*sizeof(char*));
-  }
-  afterArgs[49] = NULL;
+//  for(int k=0; k<50; k++) {
+  //  afterArgs[k]=malloc(50*sizeof(char*));
+  //  afterArgs[k] = NULL;
+//  }
 
   // Set up the signal handler
   sigset(SIGCHLD, SIG_IGN);
@@ -71,21 +70,14 @@ main() {
     // Print out the prompt and get the input
     printf("->");
     args = getaline();
-
+   
+    do {
     //check for a pipe
-    pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
+      pipe = (pipeing(args) == 1);
 
-    //printf("%d\n", pipe);
-
-   // if(pipe=1) {
-
-      /*
       // No input, continue
-      if(beforeArgs[0] == NULL)
+      if(args[0] == NULL)
         continue;
-
-      //Check for a pipe
-      //pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
 
       // Check for internal shell commands, such as exit
       if(internal_command(args))
@@ -133,64 +125,11 @@ main() {
       do_command(args, block,
 	         input, input_filename,
 	         output, output_filename);
-    //} */
+
+      shiftPipe(args);
+//	printf("%s %s %s %s %s %s\n", args[0], args[1], args[2], args[3], args[4], args[5]);
+    } while(pipe == 1);
   }
-}
-
-void run_command(char **args, int block, int input, char *input_filename, int output, char *output_filename) {
-  // No input, continue
-  if(beforeArgs[0] == NULL)
-    continue;
-
-  //Check for a pipe
-  //pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
-
-  // Check for internal shell commands, such as exit
-  if(internal_command(args))
-    continue;
-
-  // Check for an ampersand
-  block = (ampersand(args) == 0);
-
-  // Check for a pipe
-  //pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
-
-  // Check for redirected input
-  input = redirect_input(args, &input_filename);
-
-  switch(input) {
-  case -1:
-    printf("Syntax error!\n");
-    continue;
-    break;
-  case 0:
-    break;
-  case 1:
-    printf("Redirecting input from: %s\n", input_filename);
-    break;
-  }
-
-  // Check for redirected output
-  output = redirect_output(args, &output_filename);
-
-  switch(output) {
-  case -1:
-    printf("Syntax error!\n");
-    continue;
-    break;
-  case 0:
-    break;
-  case 1:
-    printf("Redirecting output to: %s\n", output_filename);
-    break;
-  case 2:
-    printf("Appending output to: %s\n", output_filename);
-  }
-
-  // Do the command
-  do_command(args, block,
-       input, input_filename,
-       output, output_filename);
 }
 
 
@@ -217,7 +156,28 @@ int ampersand(char **args) {
  * Check for pipeing
  *
  */
-int pipeing(char **args, char **beforeArgs, char **afterArgs) {
+
+
+int shiftPipe(char **args) {
+
+  int i, k;
+  int j = 0;
+  for(k = 0; args[k] != NULL; k++) {
+	free(args[k]);
+  }
+
+  for(i = k; args[i] != NULL || args[i+1] != NULL; i++) {
+	args[j] = args[i+1];
+	args[i+1] = NULL;
+	j++;
+  }
+  args[j] = args[i+1];
+  return 0;
+}
+
+
+
+int pipeing(char **args) {
   int i;
   int j;
   int k;
@@ -225,23 +185,13 @@ int pipeing(char **args, char **beforeArgs, char **afterArgs) {
   for(i = 0; args[i] != NULL; i++) {
 
     // Look for the pipe
+    
     if(args[i][0] == '|') {
 
-      for(j = 0; j < i; j++) {
-	beforeArgs[j] = args[j];
-	printf("%s\n", beforeArgs[j]);
-      }
+      args[i] = NULL;
 
       j = j + 1;
       k = 0;
-
-      while(args[j] != NULL) {
-        printf("entering while loop\n");
-	afterArgs[k] = args[j];
-	printf("%s\n", afterArgs[k]);
-        k++;
-        j++;
-      }
 
       return 1;
     }
@@ -249,7 +199,6 @@ int pipeing(char **args, char **beforeArgs, char **afterArgs) {
 
   return 0;
 }
-
 /*
  * Check for internal commands
  * Returns true if there is more to do, false otherwise
