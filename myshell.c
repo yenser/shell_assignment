@@ -29,6 +29,7 @@ void sig_handler(int signal) {
  */
 main() {
   int i;
+  int j;
   char **args;
   char **beforeArgs;
   char **afterArgs;
@@ -39,6 +40,19 @@ main() {
   char *output_filename;
   char *input_filename;
   int pipe;
+
+  
+  beforeArgs = malloc(50*sizeof(char*));
+  for(int k=0; k<50; k++) {
+    beforeArgs[k]=malloc(50*sizeof(char*));
+  }
+  beforeArgs[49] = NULL;
+
+  afterArgs = malloc(50*sizeof(char*));
+  for(int k=0; k<50; k++) {
+    afterArgs[k]=malloc(50*sizeof(char*));
+  }
+  afterArgs[49] = NULL;
 
   // Set up the signal handler
   sigset(SIGCHLD, sig_handler);
@@ -53,6 +67,9 @@ main() {
     // No input, continue
     if(args[0] == NULL)
       continue;
+    
+    //Check for a pipe
+    pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
 
     // Check for internal shell commands, such as exit
     if(internal_command(args))
@@ -131,29 +148,29 @@ int pipeing(char **args, char **beforeArgs, char **afterArgs) {
   int j;
   int k;
 
-  for(i = 0; args[i] != NULL; i++) ;
-  
-  // Look for the pipe
-  if(args[i][0] == '|') {
-
-    for(j = 0; j < i; j++) {
-      *beforeArgs[j] = args[j];
+  for(i = 0; args[i] != NULL; i++) { 
+    
+    // Look for the pipe
+    if(args[i][0] == '|') {
+      
+      for(j = 0; j < i; j++) {
+	beforeArgs[j] = args[j];
+	printf("%s\n", beforeArgs[j]);
+      }
+      
+      j = j + 1;
+      k = 0;
+      
+      while(args[j] != NULL) {
+        printf("entering while loop\n");
+	afterArgs[k] = args[j];
+	printf("%s\n", afterArgs[k]);
+        k++;
+        j++;
+      }
+      
+      return 1;
     }
-
-    j = j + 2;
-    k = 0;
-
-    while(args[j] != NULL) {
-      *afterArgs[k] = args[j];
-      k++;
-      j++;
-    }
-
-    free(args[i]);
-
-    return 1;
-  } else {
-    return 0;
   }
   
   return 0;
