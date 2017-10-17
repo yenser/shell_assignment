@@ -39,6 +39,7 @@ main() {
   int block;
   int output;
   int input;
+  int and;
   char *output_filename;
   char *input_filename;
   int pipe;
@@ -58,9 +59,11 @@ main() {
   afterArgs[49] = NULL;
 
   // Set up the signal handler
-  signal(SIGCHLD, SIG_IGN);
+  sigset(SIGCHLD, SIG_IGN);
   
+  //printf("%d\n",tcsetpgrp());
   
+  setpgid(00, 0);
 
   // Loop forever
   while(1) {
@@ -80,11 +83,17 @@ main() {
     if(internal_command(args))
       continue;
 
+  
+	// Check for  &&
+	//and = (and(args) == 0);
+	
     // Check for an ampersand
-    block = (ampersand(args) == 0);
-
-    // Check for a pipe
-    //pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
+	//if(!and) {
+		block = (ampersand(args) == 0);
+	//}
+    
+	
+	
 
     // Check for redirected input
     input = redirect_input(args, &input_filename);
@@ -216,11 +225,15 @@ int do_command(char **args, int block,
     perror("Error ENOMEM: ");
     return;
   }
-
+  
+  if(!block) {
+    setpgid(child_id, 0);
+  }
+  
   //if this is the child
   if(child_id == 0) {
 	if(!block) {
-		setpgid(child_id, 0);
+		setpgid(0, 0);
 	}
     // Set up redirection in the child process
     if(input)
@@ -241,7 +254,7 @@ int do_command(char **args, int block,
 
   // Wait for the child process to complete, if necessary
   if(block) {
-    printf("Waiting for child, pid = %d\n", child_id);
+    //printf("Waiting for child, pid = %d\n", child_id);
     result = waitpid(child_id, &status, WUNTRACED);
   } else {
 	result = waitpid(child_id, &status, WNOHANG); 
