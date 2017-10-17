@@ -45,7 +45,7 @@ main() {
   int pipe;
   int doReturn;
 
-  
+
   beforeArgs = malloc(50*sizeof(char*));
   for(int k=0; k<50; k++) {
     beforeArgs[k]=malloc(50*sizeof(char*));
@@ -60,18 +60,18 @@ main() {
 
   // Set up the signal handler
   sigset(SIGCHLD, SIG_IGN);
-  
+
   //printf("%d\n",tcsetpgrp());
-  
+
   setpgid(0, 0);
 
   // Loop forever
   while(1) {
-    
+
     // Print out the prompt and get the input
     printf("->");
-    args = getaline(); 
-   
+    args = getaline();
+
     //check for a pipe
     pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
 
@@ -79,10 +79,11 @@ main() {
 
    // if(pipe=1) {
 
+      /*
       // No input, continue
       if(beforeArgs[0] == NULL)
         continue;
-    
+
       //Check for a pipe
       //pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
 
@@ -132,9 +133,66 @@ main() {
       do_command(args, block,
 	         input, input_filename,
 	         output, output_filename);
-    //}
+    //} */
   }
 }
+
+void run_command(char **args, int block, int input, char *input_filename, int output, char *output_filename) {
+  // No input, continue
+  if(beforeArgs[0] == NULL)
+    continue;
+
+  //Check for a pipe
+  //pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
+
+  // Check for internal shell commands, such as exit
+  if(internal_command(args))
+    continue;
+
+  // Check for an ampersand
+  block = (ampersand(args) == 0);
+
+  // Check for a pipe
+  //pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
+
+  // Check for redirected input
+  input = redirect_input(args, &input_filename);
+
+  switch(input) {
+  case -1:
+    printf("Syntax error!\n");
+    continue;
+    break;
+  case 0:
+    break;
+  case 1:
+    printf("Redirecting input from: %s\n", input_filename);
+    break;
+  }
+
+  // Check for redirected output
+  output = redirect_output(args, &output_filename);
+
+  switch(output) {
+  case -1:
+    printf("Syntax error!\n");
+    continue;
+    break;
+  case 0:
+    break;
+  case 1:
+    printf("Redirecting output to: %s\n", output_filename);
+    break;
+  case 2:
+    printf("Appending output to: %s\n", output_filename);
+  }
+
+  // Do the command
+  do_command(args, block,
+       input, input_filename,
+       output, output_filename);
+}
+
 
 /*
  * Check for ampersand as the last argument
@@ -157,26 +215,26 @@ int ampersand(char **args) {
 
 /*
  * Check for pipeing
- * 
+ *
  */
 int pipeing(char **args, char **beforeArgs, char **afterArgs) {
   int i;
   int j;
   int k;
 
-  for(i = 0; args[i] != NULL; i++) { 
-    
+  for(i = 0; args[i] != NULL; i++) {
+
     // Look for the pipe
     if(args[i][0] == '|') {
-      
+
       for(j = 0; j < i; j++) {
 	beforeArgs[j] = args[j];
 	printf("%s\n", beforeArgs[j]);
       }
-      
+
       j = j + 1;
       k = 0;
-      
+
       while(args[j] != NULL) {
         printf("entering while loop\n");
 	afterArgs[k] = args[j];
@@ -184,11 +242,11 @@ int pipeing(char **args, char **beforeArgs, char **afterArgs) {
         k++;
         j++;
       }
-      
+
       return 1;
     }
   }
-  
+
   return 0;
 }
 
@@ -227,11 +285,11 @@ int do_command(char **args, int block,
     perror("Error ENOMEM: ");
     return;
   }
-  
+
   if(!block) {
     setpgid(child_id, 0);
   }
-  
+
   //if this is the child
   if(child_id == 0) {
 	if(!block) {
@@ -259,7 +317,7 @@ int do_command(char **args, int block,
     //printf("Waiting for child, pid = %d\n", child_id);
     result = waitpid(child_id, &status, WUNTRACED);
   } else {
-	result = waitpid(child_id, &status, WNOHANG); 
+	result = waitpid(child_id, &status, WNOHANG);
   }
 }
 
@@ -309,7 +367,7 @@ int redirect_output(char **args, char **output_filename) {
     if(args[i][0] == '>') {
       free(args[i]);
 
-      // Look for the >> 
+      // Look for the >>
       if(args[i+1][0] == '>') {
 	shouldAppend = 1;
 	free(args[i+1]);
@@ -324,7 +382,7 @@ int redirect_output(char **args, char **output_filename) {
       }
 
       // Adjust the rest of the arguments in the array
-      
+
       for(j = i; args[j-1] != NULL; j++) {
 		args[j] = args[j+2+shouldAppend];
       }
@@ -338,5 +396,3 @@ int redirect_output(char **args, char **output_filename) {
 
   return 0;
 }
-
-
