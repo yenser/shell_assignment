@@ -63,7 +63,7 @@ main() {
   
   //printf("%d\n",tcsetpgrp());
   
-  setpgid(00, 0);
+  setpgid(0, 0);
 
   // Loop forever
   while(1) {
@@ -75,9 +75,9 @@ main() {
     //check for a pipe
     pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
 
-    printf("%d\n", pipe);
+    //printf("%d\n", pipe);
 
-    if(pipe=1) {
+   // if(pipe=1) {
 
       // No input, continue
       if(beforeArgs[0] == NULL)
@@ -87,17 +87,17 @@ main() {
       //pipe = (pipeing(args, beforeArgs, afterArgs) == 1);
 
       // Check for internal shell commands, such as exit
-      if(internal_command(beforeArgs))
+      if(internal_command(args))
         continue;
 
       // Check for an ampersand
-      block = (ampersand(beforeArgs) == 0);
+      block = (ampersand(args) == 0);
 
       // Check for a pipe
       //pipe = (pipeing(args, beforeArgs, afterArgs) == 0);
 
       // Check for redirected input
-      input = redirect_input(beforeArgs, &input_filename);
+      input = redirect_input(args, &input_filename);
 
       switch(input) {
       case -1:
@@ -112,7 +112,7 @@ main() {
       }
 
       // Check for redirected output
-      output = redirect_output(beforeArgs, &output_filename);
+      output = redirect_output(args, &output_filename);
 
       switch(output) {
       case -1:
@@ -129,10 +129,10 @@ main() {
       }
 
       // Do the command
-      do_command(beforeArgs, block,
+      do_command(args, block,
 	         input, input_filename,
 	         output, output_filename);
-    }
+    //}
   }
 }
 
