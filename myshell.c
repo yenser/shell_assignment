@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
 
@@ -20,7 +21,7 @@ extern char **getaline();
 void sig_handler(int signal) {
   int status;
   int result = wait(&status);
-
+  //printf("signal: %d\n", signal);
   printf("Wait returned %d\n", result);
 }
 
@@ -39,6 +40,7 @@ main() {
   char *output_filename;
   char *input_filename;
   int pipe;
+  int doReturn;
 
   // Set up the signal handler
   sigset(SIGCHLD, sig_handler);
@@ -195,6 +197,7 @@ int do_command(char **args, int block,
     return;
   }
 
+  //if this is the child
   if(child_id == 0) {
 
     // Set up redirection in the child process
@@ -211,22 +214,15 @@ int do_command(char **args, int block,
     // Execute the command
     result = execvp(args[0], args);
 
-/*
-    if(input) {
-	fclose(stdin);
-    } else if(output) {
-	fclose(stdout);
-    }
-*/
-
-
     exit(-1);
   }
 
   // Wait for the child process to complete, if necessary
   if(block) {
     printf("Waiting for child, pid = %d\n", child_id);
-    result = waitpid(child_id, &status, 0);
+    result = waitpid(child_id, &status, WUNTRACED);
+  } else {
+	result = waitpid(child_id, &status, WNOHANG); 
   }
 }
 
