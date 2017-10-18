@@ -13,6 +13,10 @@
 #include <errno.h>
 #include <signal.h>
 
+
+#define READ_END 0
+#define WRITE_END 1
+
 extern char **getaline();
 
 /*
@@ -60,6 +64,9 @@ main() {
   // Set up the signal handler
   sigset(SIGCHLD, SIG_IGN);
 
+  
+  int fd[2];
+  pipe(fd);
   //printf("%d\n",tcsetpgrp());
 
   setpgid(0, 0);
@@ -244,6 +251,11 @@ int do_command(char **args, int block,
 	if(!block) {
 		setpgid(0, 0);
 	}
+	
+	//get input for pipe
+	dup2(fd[READ_END], STDIN_FILENO);
+    close(fd[READ_END]);
+	
     // Set up redirection in the child process
     if(input)
       freopen(input_filename, "r", stdin);
@@ -257,6 +269,11 @@ int do_command(char **args, int block,
 
     // Execute the command
     result = execvp(args[0], args);
+	
+	//get output for pipe
+	dup2(fd[WRITE_END], STDOUT_FILENO);
+    close(fd[WRITE_END]);
+	
 
     exit(-1);
   }
