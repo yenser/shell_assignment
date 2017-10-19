@@ -7,15 +7,13 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
 
-
-#define READ_END 0
-#define WRITE_END 1
 
 extern char **getaline();
 
@@ -46,10 +44,16 @@ main() {
   int and;
   char *output_filename;
   char *input_filename;
-  int pipe;
+  int isPipe;
+  int totalPipes;
   int doReturn;
+  int wasPiped;
 
-  beforeArgs = malloc(50*sizeof(char*));
+  int fdc[2];
+  int fdp[2];
+  int fd_in = 0;
+  
+ beforeArgs = malloc(50*sizeof(char*));
 //  for(int k=0; k<50; k++) {
   //  beforeArgs[k]=malloc(50*sizeof(char*));
   //  beforeArgs[k] = NULL;
@@ -65,10 +69,10 @@ main() {
   sigset(SIGCHLD, SIG_IGN);
 
   
-  int fd[2];
-  pipe(fd);
+
   //printf("%d\n",tcsetpgrp());
 
+  wasPiped = 0;
   setpgid(0, 0);
 
   // Loop forever
@@ -77,10 +81,21 @@ main() {
     // Print out the prompt and get the input
     printf("->");
     args = getaline();
-   
+
+
+    //save file descriptors
+
+
+
+      
     do {
-    //check for a pipe
-      pipe = (pipeing(args) == 1);
+
+
+      pipe(fdp);
+
+
+      //check for a pipe
+      isPipe = (pipeing(args) == 1);
 
       // No input, continue
       if(args[0] == NULL)
@@ -131,11 +146,15 @@ main() {
       // Do the command
       do_command(args, block,
 	         input, input_filename,
-	         output, output_filename);
+	         output, output_filename, isPipe, wasPiped, &fdp, &fdc);
 
-      shiftPipe(args);
-//	printf("%s %s %s %s %s %s\n", args[0], args[1], args[2], args[3], args[4], args[5]);
-    } while(pipe == 1);
+      if(isPipe == 1) {
+        shiftPipe(args);
+      }
+      wasPiped = isPipe;
+      
+    } while(isPipe == 1);
+    
   }
 }
 
@@ -193,7 +212,7 @@ int pipeing(char **args) {
 
     // Look for the pipe
     
-    if(args[i][0] == '|') {
+    if(args[i][0] == '|' || args[i][0] == ';') {
 
       args[i] = NULL;
 
@@ -223,15 +242,28 @@ int internal_command(char **args) {
  */
 int do_command(char **args, int block,
 	       int input, char *input_filename,
-	       int output, char *output_filename) {
+	       int output, char *output_filename, int isPipe, int wasPiped, int** fdp, int** fdc) {
 
   int result;
   pid_t child_id;
   int status;
+  
+ /* if(isPipe == 1 || wasPiped == 1) {
+    
+      dup2(*fdp[0],0);
+      dup2(*fdp[1], 1);
 
+    if(wasPiped == 0 && isPipe == 1) {
+      close(*fdp[0]);
+    }
+    if(isPipe == 1) {
+      close(*fdp[0]);
+    }
+  }
+*/
   // Fork the child process
   child_id = fork();
-
+  
   // Check for errors in fork()
   switch(child_id) {
   case EAGAIN:
@@ -248,14 +280,25 @@ int do_command(char **args, int block,
 
   //if this is the child
   if(child_id == 0) {
-	if(!block) {
-		setpgid(0, 0);
-	}
-	
-	//get input for pipe
-	dup2(fd[READ_END], STDIN_FILENO);
-    close(fd[READ_END]);
-	
+    if(!block) {
+      setpgid(0, 0);
+    }
+   
+
+/*
+    if(isPipe == 1 || wasPiped == 1) {
+      pipe(*fdc);
+      dup2(*fdc[1], 1);
+      dup2(*fdc[0], 0);
+      close(*fdc[1]);
+      printf("child\n");
+    }
+*/
+	//printf("fd_in = %d and set to 0\n", *fd_in);
+	//printf("fd_in = %d\n", *fd_in);	
+
+
+  
     // Set up redirection in the child process
     if(input)
       freopen(input_filename, "r", stdin);
@@ -269,22 +312,37 @@ int do_command(char **args, int block,
 
     // Execute the command
     result = execvp(args[0], args);
-	
-	//get output for pipe
-	dup2(fd[WRITE_END], STDOUT_FILENO);
-    close(fd[WRITE_END]);
-	
+    //close(*fdc[0]);
+    //close(*fdc[1]);
+
 
     exit(-1);
   }
 
-  // Wait for the child process to complete, if necessary
-  if(block) {
-    //printf("Waiting for child, pid = %d\n", child_id);
-    result = waitpid(child_id, &status, WUNTRACED);
+  if(isPipe == 1 || wasPiped == 1) {
+  
+    wait(NULL);
+  /*  close(*fdc[0]);
+    fdp[0] = fdp[1];
+
+
+    close(*fdp[0]);
+    close(*fdp[1]);
+  */
+	//printf("fd_in = %d\n", *fd_in);
   } else {
-	result = waitpid(child_id, &status, WNOHANG);
+  // Wait for the child process to complete, if necessary
+    if(block) {
+    //printf("Waiting for child, pid = %d\n", child_id);
+      result = waitpid(child_id, &status, WUNTRACED);
+
+    } else {
+  	result = waitpid(child_id, &status, WNOHANG);
+    }
+
   }
+
+
 }
 
 /*

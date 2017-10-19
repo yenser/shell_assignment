@@ -1,5 +1,5 @@
 %{
-int _numargs = 10;
+int _numargs =30;
 char *_args[10];
 int _argcount = 0;
 %}
